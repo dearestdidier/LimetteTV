@@ -1,0 +1,40 @@
+# Gradle / build output
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android build artifacts
+app/release/
+app/debug/
+*.apk
+*.aab
+
+# Machine-local configuration (contains SDK path) - never commit
+local.properties
+
+# IDE / OS
+.idea/
+*.iml
+*.ipr
+*.iws
+.qoder/
+.DS_Store
+Thumbs.db
+
+# Signing keys - never commit
+*.jks
+*.keystore
+*.key
+*.secret
+密钥.txt
+
+# Logs, local databases and temporary files
+*.log
+log.txt
+*.db
+*.sqlite
+*.sqlite3
+*.class
+*.kotlin_module
+*.html

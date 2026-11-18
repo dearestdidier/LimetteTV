@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 无开屏图：启动直接使用应用底色，MainActivity 首帧即首页 -->
+    <style name="Theme.LimetteTV" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:colorBackground">@color/background_dark</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+    </style>
+
+    <style name="Theme.LimetteTV.Fullscreen" parent="Theme.LimetteTV">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>
