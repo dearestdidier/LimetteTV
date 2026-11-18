@@ -160,46 +160,57 @@ fun SettingSwitchRow(
     }
 }
 
+/**
+ * 底部 DOCK 导航栏：居中悬浮、半透明大圆角胶囊背景，与原版 LomenTV 视觉一致。
+ * 每个入口采用「图标在上、文字在下」的竖排布局；遥控器聚焦时整项高亮为黄色。
+ */
 @Composable
 fun BottomNav(items: List<Pair<String, ImageVector>>, selected: Int, onSelect: (Int) -> Unit) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF101014))
-            .padding(horizontal = 28.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(bottom = 20.dp),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        items.forEachIndexed { index, (label, icon) ->
-            val active = index == selected
-            var focused by remember { mutableStateOf(false) }
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        when {
-                            focused -> PrimaryYellow
-                            active -> PrimaryYellow.copy(alpha = 0.18f)
-                            else -> SurfaceDark
-                        }
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(40.dp))
+                .background(Color.White.copy(alpha = 0.16f))
+                .padding(horizontal = 26.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(44.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items.forEachIndexed { index, (label, icon) ->
+                val active = index == selected
+                var focused by remember { mutableStateOf(false) }
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            when {
+                                focused -> PrimaryYellow
+                                active -> PrimaryYellow.copy(alpha = 0.22f)
+                                else -> Color.Transparent
+                            }
+                        )
+                        .clickable { onSelect(index) }
+                        .onFocusChanged { focused = it.isFocused }
+                        .focusable()
+                        .padding(horizontal = 22.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        icon, contentDescription = label,
+                        tint = if (focused) Color.Black else if (active) PrimaryYellow else TextPrimary,
+                        modifier = Modifier.size(26.dp)
                     )
-                    .clickable { onSelect(index) }
-                    .onFocusChanged { focused = it.isFocused }
-                    .focusable()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    icon, contentDescription = label,
-                    tint = if (focused) Color.Black else TextPrimary,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    label,
-                    color = if (focused) Color.Black else TextPrimary,
-                    style = MaterialTheme.typography.labelLarge
-                )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        label,
+                        color = if (focused) Color.Black else if (active) PrimaryYellow else TextPrimary,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
             }
         }
     }

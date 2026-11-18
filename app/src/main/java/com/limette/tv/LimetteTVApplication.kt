@@ -24,13 +24,9 @@ class LimetteTVApplication : Application(), ImageLoaderFactory {
                     val request = chain.request()
                     val url = request.url
                     val builder = request.newBuilder()
-                    val feiNiuHost = runCatching {
-                        java.net.URL(FeiNiuAuth.baseUrl).host
-                    }.getOrDefault("")
                     when {
-                        url.encodedPath.startsWith("/v/api/v1/sys/img") &&
-                            feiNiuHost.isNotBlank() && url.host == feiNiuHost ->
-                            FeiNiuAuth.token?.let { builder.header("Authorization", it) }
+                        url.encodedPath.startsWith("/v/api/v1/sys/img") ->
+                            FeiNiuAuth.tokenFor(url.host)?.let { builder.header("Authorization", it) }
 
                         url.host != "127.0.0.1" ->
                             LocalImageAuth.basicFor("${url.host}:${url.port}")

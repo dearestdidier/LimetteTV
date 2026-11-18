@@ -45,8 +45,11 @@ class MediaLibraryRepository @Inject constructor(
     suspend fun scanAll(): Result<Int> = withContext(Dispatchers.IO) {
         runCatching {
             val sources = mediaSourceRepository.getSources().filter { it.enabled }
-            // 飞牛影视海报索引（未配置或失败时静默降级到本地封面 / 渐变卡片）
-            runCatching { feiNiuClient.refreshIndex() }
+            // 用已添加的飞牛影视源刷新海报索引，供本地 SMB/WebDAV 视频配图；
+            // 没有飞牛源或刷新失败时静默降级到本地封面 / 渐变卡片
+            sources.firstOrNull { it.type == MediaSource.SourceType.FENIU }?.let { fn ->
+                runCatching { feiNiuClient.refreshPosterIndex(fn) }
+            }
 
             var total = 0
             sources.forEach { source ->
@@ -76,35 +79,42 @@ class MediaLibraryRepository @Inject constructor(
             if (!seenPaths.add(storedPath)) return@forEach
             val fingerprint = fingerprint(file)
             val old = existing[storedPath]
+            val isFeniu = source.type == MediaSource.SourceType.FENIU
             val parsed = LocalMediaParser.parse(file.name, file.path)
-            val poster = if (old?.fileFingerprint == fingerprint) {
-                // 文件未变化，沿用已有封面，避免每次扫描重复请求 NAS
-                webDavMediaDao.getByFilePath(storedPath)?.posterUrl
-                    ?: thumbnailResolver.resolve(file, client)
-            } else {
-                thumbnailResolver.resolve(file, client)
+            // 飞牛影视自带标题与海报；SMB/WebDAV 用本地解析器 + 缩略图兜底
+            val displayName = file.displayTitle ?: parsed.title
+            val season = file.seasonNumber ?: parsed.seasonNumber
+            val episode = file.episodeNumber ?: parsed.episodeNumber
+            val poster = when {
+                file.posterUrl != null -> file.posterUrl
+                old?.fileFingerprint == fingerprint ->
+                    // 文件未变化，沿用已有封面，避免每次扫描重复请求 NAS
+                    webDavMediaDao.getByFilePath(storedPath)?.posterUrl
+                        ?: thumbnailResolver.resolve(file, client)
+                else -> thumbnailResolver.resolve(file, client)
             }
 
             batch.add(
                 WebDavMediaEntity(
                     id = storedPath,
                     libraryId = source.id,
-                    title = parsed.title,
-                    originalTitle = file.name,
+                    title = displayName,
+                    originalTitle = if (isFeniu) displayName else file.name,
                     posterUrl = poster,
                     backdropUrl = poster,
-                    year = parsed.year,
-                    type = parsed.type,
-                    isMovie = parsed.episodeNumber == null,
-                    seasonNumber = parsed.seasonNumber,
-                    episodeNumber = parsed.episodeNumber,
+                    year = file.year ?: parsed.year,
+                    type = if (isFeniu && episode != null) com.limette.tv.domain.model.MediaType.TV_SHOW else parsed.type,
+                    isMovie = episode == null,
+                    seasonNumber = season,
+                    episodeNumber = episode,
                     filePath = storedPath,
-                    fileName = file.name,
+                    fileName = if (isFeniu) displayName else file.name,
                     fileSize = file.size,
                     fileFingerprint = fingerprint,
                     source = when (source.type) {
                         MediaSource.SourceType.SMB -> "smb"
                         MediaSource.SourceType.WEBDAV -> "webdav"
+                        MediaSource.SourceType.FENIU -> "feiniu"
                     }
                 )
             )

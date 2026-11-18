@@ -64,7 +64,7 @@ fun MediaLibraryScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var message by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize().background(BackgroundDark)) {
-        ScreenHeader("媒体库", "可同时启用多个 SMB / WebDAV 媒体源，首页聚合展示全部视频", onBack)
+        ScreenHeader("媒体库", "可同时启用 SMB / WebDAV / 飞牛影视媒体源，首页聚合展示全部视频", onBack)
 
         Row(modifier = Modifier.padding(horizontal = 28.dp)) {
             Button(
@@ -96,7 +96,7 @@ fun MediaLibraryScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("还没有添加媒体源", style = MaterialTheme.typography.titleLarge, color = TextPrimary)
                     Spacer(Modifier.height(8.dp))
-                    Text("支持 SMB 共享与 WebDAV，可同时选择多个", color = TextMuted)
+                    Text("支持 SMB 共享、WebDAV 与飞牛影视账号，可同时添加多个", color = TextMuted)
                 }
             }
         } else {

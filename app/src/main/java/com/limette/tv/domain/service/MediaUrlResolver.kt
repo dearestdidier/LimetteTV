@@ -1,6 +1,7 @@
 package com.limette.tv.domain.service
 
 import android.util.Base64
+import com.limette.tv.data.feiniu.FeiNiuClient
 import com.limette.tv.data.local.database.dao.WebDavMediaDao
 import com.limette.tv.data.preferences.MediaSourceRepository
 import com.limette.tv.data.remote.RemoteFileClient
@@ -33,7 +34,8 @@ data class MediaPlaybackInfo(
 class MediaUrlResolver @Inject constructor(
     private val mediaSourceRepository: MediaSourceRepository,
     private val webDavMediaDao: WebDavMediaDao,
-    private val clientFactory: RemoteFileClientFactory
+    private val clientFactory: RemoteFileClientFactory,
+    private val feiNiuClient: FeiNiuClient
 ) {
     suspend fun resolvePlaybackUrl(videoPath: String): Result<MediaPlaybackInfo> =
         withContext(Dispatchers.IO) {
@@ -50,15 +52,19 @@ class MediaUrlResolver @Inject constructor(
                     ?: mediaSourceRepository.getSources().firstOrNull { it.enabled }
                     ?: throw IllegalStateException("尚未添加或启用任何媒体源")
 
-                val client = clientFactory.create(source)
                 when (source.type) {
-                    MediaSource.SourceType.SMB -> MediaPlaybackInfo(
-                        url = client.getFileUrl(relativePath),
-                        subtitles = findSubtitles(client, relativePath)
-                    )
+                    MediaSource.SourceType.FENIU -> {
+                        // 飞牛 play_link 有时效，播放时动态换取真实 m3u8 地址并附 token
+                        val playback = feiNiuClient.buildPlaybackInfo(source, relativePath)
+                            .getOrElse { throw it }
+                        MediaPlaybackInfo(url = playback.url, headers = playback.headers)
+                    }
 
-                    MediaSource.SourceType.WEBDAV -> {
-                        val headers = if (source.username.isNotBlank()) {
+                    MediaSource.SourceType.SMB, MediaSource.SourceType.WEBDAV -> {
+                        val client = clientFactory.create(source)
+                        val headers = if (source.type == MediaSource.SourceType.WEBDAV &&
+                            source.username.isNotBlank()
+                        ) {
                             mapOf("Authorization" to basicAuth(source.username, source.password))
                         } else emptyMap()
                         MediaPlaybackInfo(

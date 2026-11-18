@@ -28,7 +28,13 @@ data class WebDavFile(
     val path: String,
     val isDirectory: Boolean,
     val size: Long = 0,
-    val lastModified: String = ""
+    val lastModified: String = "",
+    // 飞牛影视等结构化媒体源可直接提供元数据；SMB / WebDAV 使用默认值，由本地解析器推断
+    val displayTitle: String? = null,
+    val posterUrl: String? = null,
+    val year: Int? = null,
+    val seasonNumber: Int? = null,
+    val episodeNumber: Int? = null
 )
 
 class WebDavClient(

@@ -107,8 +107,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("io.coil-kt:coil-gif:2.5.0")
 
-    // Media3 / ExoPlayer（仅本地文件与局域网 HTTP 流，不含 HLS 在线流）
+    // Media3 / ExoPlayer：本地文件、局域网 HTTP 流，以及飞牛影视返回的 HLS(m3u8) 播放链接
     implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.2.1")
     implementation("androidx.media3:media3-ui:1.2.1")
     implementation("androidx.media3:media3-datasource:1.2.1")
     implementation("androidx.media3:media3-datasource-okhttp:1.2.1")

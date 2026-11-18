@@ -6,8 +6,6 @@ import com.limette.tv.data.feiniu.FeiNiuClient
 import com.limette.tv.data.local.database.dao.WatchHistoryDao
 import com.limette.tv.data.local.database.dao.WebDavMediaDao
 import com.limette.tv.data.local.database.entity.WebDavMediaEntity
-import com.limette.tv.data.preferences.FeiNiuConfig
-import com.limette.tv.data.preferences.FeiNiuPreferences
 import com.limette.tv.data.preferences.MediaSourceRepository
 import com.limette.tv.data.preferences.PlayerSettingsPreferences
 import com.limette.tv.data.remote.LocalImageAuth
@@ -33,8 +31,6 @@ class MainViewModel @Inject constructor(
     private val mediaSourceRepository: MediaSourceRepository,
     private val mediaLibraryRepository: MediaLibraryRepository,
     private val webDavMediaDao: WebDavMediaDao,
-    private val feiNiuPreferences: FeiNiuPreferences,
-    private val feiNiuClient: FeiNiuClient,
     private val playerSettingsPreferences: PlayerSettingsPreferences,
     private val favoriteService: FavoriteService,
     private val watchHistoryService: WatchHistoryService,
@@ -46,9 +42,6 @@ class MainViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val scanState: StateFlow<ScanState> = mediaLibraryRepository.scanState
-
-    val feiNiuConfig: StateFlow<FeiNiuConfig> = feiNiuPreferences.config
-        .stateIn(viewModelScope, SharingStarted.Eagerly, FeiNiuConfig())
 
     val rememberPlaybackPosition: Flow<Boolean> = playerSettingsPreferences.rememberPlaybackPosition
     val autoSkipIntroOutro: Flow<Boolean> = playerSettingsPreferences.autoSkipIntroOutro
@@ -99,12 +92,6 @@ class MainViewModel @Inject constructor(
         mediaSourceRepository.setEnabled(id, enabled)
         if (!enabled) mediaLibraryRepository.clearSource(id)
         else refresh()
-    }
-
-    suspend fun saveFeiNiuConfig(config: FeiNiuConfig) {
-        feiNiuPreferences.save(config)
-        // 重新拉一次飞牛海报索引，并回填已入库视频的封面
-        refresh()
     }
 
     suspend fun startPositionFor(mediaId: String): Long =
