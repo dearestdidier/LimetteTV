@@ -99,6 +99,7 @@ import com.limette.tv.domain.service.PlayerState
 import com.limette.tv.ui.theme.BackgroundDark
 import com.limette.tv.ui.theme.DialogUiTokens
 import com.limette.tv.ui.theme.PrimaryYellow
+import com.limette.tv.ui.theme.PrimaryYellowLight
 import com.limette.tv.ui.theme.SurfaceDark
 import com.limette.tv.ui.theme.TextPrimary
 import kotlinx.coroutines.CoroutineScope
@@ -1473,7 +1474,7 @@ private fun PlayerControls(
                             bubbleWidthDp = with(density) { size.width.toDp() }
                         }
                         .background(
-                            color = if (bubbleHighlighted) Color(0xFFFFF176) else PrimaryYellow,
+                            color = if (bubbleHighlighted) PrimaryYellowLight else PrimaryYellow,
                             shape = RoundedCornerShape(4.dp)
                         )
                         .padding(horizontal = 10.dp, vertical = 4.dp),

@@ -7,10 +7,10 @@ val BackgroundDark = Color(0xFF0a0a0c)
 val SurfaceDark = Color(0xFF1a1a1e)
 val SurfaceVariant = Color(0xFF2a2a2e)
 
-// Primary Colors
-val PrimaryYellow = Color(0xFFfddd0e)
-val PrimaryYellowLight = Color(0xFFfde64d)
-val PrimaryYellowDark = Color(0xFFd4b900)
+// Primary Colors —— 品牌主色（薄荷绿 #7dd8b3），按钮/焦点/进度等统一使用
+val PrimaryYellow = Color(0xFF7dd8b3)
+val PrimaryYellowLight = Color(0xFFa5e6cd)
+val PrimaryYellowDark = Color(0xFF54b891)
 
 // Secondary Colors
 val SecondaryGreen = Color(0xFF10b981)
@@ -36,8 +36,8 @@ val WarningYellow = Color(0xFFeab308)
 // Special Effects
 val GlassBackground = Color(0x33FFFFFF)
 val GlassBorder = Color(0x1AFFFFFF)
-val GlowYellow = Color(0x80fddd0e)
-val GlowPrimary = Color(0x40fddd0e)
+val GlowYellow = Color(0x807dd8b3)
+val GlowPrimary = Color(0x407dd8b3)
 
 // Gradient Colors
 val GradientStart = Color(0xFF0a0a0c)
