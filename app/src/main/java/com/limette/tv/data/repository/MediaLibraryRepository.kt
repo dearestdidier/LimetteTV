@@ -25,10 +25,11 @@ sealed interface ScanState {
     data class Running(val found: Int, val currentSource: String) : ScanState
     data class Done(val total: Int) : ScanState
     data class Failed(val message: String) : ScanState
+    data class SourceError(val sourceName: String, val message: String) : ScanState
 }
 
 /**
- * 扫描所有启用的媒体源（SMB / WebDAV），把视频文件写入本地数据库。
+ * 扫描所有启用的媒体源（SMB / WebDAV / 飞牛影视），把视频文件写入本地数据库。
  * 不做任何在线刮削；封面来自飞牛影视或 NAS 目录内的本地图片。
  */
 @Singleton
@@ -45,6 +46,10 @@ class MediaLibraryRepository @Inject constructor(
     suspend fun scanAll(): Result<Int> = withContext(Dispatchers.IO) {
         runCatching {
             val sources = mediaSourceRepository.getSources().filter { it.enabled }
+            if (sources.isEmpty()) {
+                throw IllegalStateException("没有启用的媒体源，请先在媒体库页面添加并启用媒体源")
+            }
+
             // 用已添加的飞牛影视源刷新海报索引，供本地 SMB/WebDAV 视频配图；
             // 没有飞牛源或刷新失败时静默降级到本地封面 / 渐变卡片
             sources.firstOrNull { it.type == MediaSource.SourceType.FENIU }?.let { fn ->
@@ -55,7 +60,14 @@ class MediaLibraryRepository @Inject constructor(
             sources.forEach { source ->
                 _scanState.value = ScanState.Running(0, source.name)
                 LocalImageAuth.register(source)
-                total += scanSource(source)
+                try {
+                    total += scanSource(source)
+                } catch (e: Exception) {
+                    // 记录单个源的错误但继续扫描其他源
+                    _scanState.value = ScanState.SourceError(source.name, e.message ?: "未知错误")
+                    // 短暂延迟让 UI 显示错误
+                    Thread.sleep(500)
+                }
             }
             _scanState.value = ScanState.Done(total)
             total
@@ -64,9 +76,26 @@ class MediaLibraryRepository @Inject constructor(
 
     private suspend fun scanSource(source: MediaSource): Int {
         val client = clientFactory.create(source)
-        val files = client.listAllVideoFiles { found ->
+        val filesResult = client.listAllVideoFiles { found ->
             _scanState.value = ScanState.Running(found, source.name)
-        }.getOrElse { throw it }
+        }
+        
+        if (filesResult.isFailure) {
+            val errorMsg = when (source.type) {
+                MediaSource.SourceType.SMB -> "SMB 连接失败：${filesResult.exceptionOrNull()?.message ?: "请检查服务器地址、共享名、用户名密码"}"
+                MediaSource.SourceType.WEBDAV -> "WebDAV 连接失败：${filesResult.exceptionOrNull()?.message ?: "请检查服务器地址、路径、用户名密码"}"
+                MediaSource.SourceType.FENIU -> "飞牛影视连接失败：${filesResult.exceptionOrNull()?.message ?: "请检查服务器地址、FN ID、账号密码"}"
+            }
+            throw IllegalStateException(errorMsg)
+        }
+
+        val files = filesResult.getOrNull() ?: emptyList()
+        
+        if (files.isEmpty()) {
+            // 没有找到视频文件，记录警告但不抛出异常
+            _scanState.value = ScanState.SourceError(source.name, "未扫描到视频文件，请检查路径是否正确")
+            Thread.sleep(500)
+        }
 
         val existing = webDavMediaDao.getFingerprintsByLibraryId(source.id)
             .associateBy { it.filePath }

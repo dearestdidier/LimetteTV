@@ -3,7 +3,7 @@ package com.limette.tv
 import android.app.Application
 import coil.ImageLoader
 import coil.ImageLoaderFactory
-import com.limette.tv.data.feiniu.FeiNiuAuth
+import com.limette.tv.data.feiniu.FeiNiuClient
 import com.limette.tv.data.remote.LocalImageAuth
 import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
@@ -26,7 +26,7 @@ class LimetteTVApplication : Application(), ImageLoaderFactory {
                     val builder = request.newBuilder()
                     when {
                         url.encodedPath.startsWith("/v/api/v1/sys/img") ->
-                            FeiNiuAuth.tokenFor(url.host)?.let { builder.header("Authorization", it) }
+                            FeiNiuClient.Auth.tokenFor(url.host)?.let { builder.header("Authorization", it) }
 
                         url.host != "127.0.0.1" ->
                             LocalImageAuth.basicFor("${url.host}:${url.port}")

@@ -1,5 +1,8 @@
 package com.limette.tv.ui.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,35 +35,55 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.limette.tv.ui.theme.PrimaryYellow
 import com.limette.tv.ui.theme.SurfaceDark
 import com.limette.tv.ui.theme.TextMuted
 import com.limette.tv.ui.theme.TextPrimary
 
-/** 遥控器友好的可聚焦卡片，聚焦时高亮描边。 */
+/** 遥控器友好的可聚焦卡片，聚焦时高亮描边、缩放、光晕效果。 */
 @Composable
 fun FocusableBox(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(10.dp),
+    shape: Shape = RoundedCornerShape(12.dp),
     backgroundColor: Color = SurfaceDark,
     content: @Composable BoxScope.(focused: Boolean) -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.04f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    )
+    val elevation by animateFloatAsState(
+        targetValue = if (focused) 8f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    )
+    val borderWidth by animateFloatAsState(
+        targetValue = if (focused) 3f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    )
+    
     Box(
         modifier = modifier
             .clip(shape)
-            .background(if (focused) PrimaryYellow.copy(alpha = 0.16f) else backgroundColor)
+            .background(if (focused) PrimaryYellow.copy(alpha = 0.2f) else backgroundColor)
             .border(
-                width = if (focused) 2.dp else 1.dp,
+                width = borderWidth.dp,
                 color = if (focused) PrimaryYellow else Color.White.copy(alpha = 0.08f),
                 shape = shape
             )
             .clickable { onClick() }
             .onFocusChanged { focused = it.isFocused }
-            .focusable(),
+            .focusable()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin.Center
+            },
         content = { content(focused) }
     )
 }
@@ -82,6 +105,11 @@ fun SectionTitle(text: String, trailing: String? = null) {
 @Composable
 fun TopAction(icon: ImageVector, label: String, onClick: () -> Unit) {
     var focused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.1f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    )
+    
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(20.dp))
@@ -89,7 +117,12 @@ fun TopAction(icon: ImageVector, label: String, onClick: () -> Unit) {
             .clickable { onClick() }
             .onFocusChanged { focused = it.isFocused }
             .focusable()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin.Center
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -135,12 +168,22 @@ fun SettingSwitchRow(
     onCheckedChange: (Boolean) -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
+    val borderWidth by animateFloatAsState(
+        targetValue = if (focused) 2f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(if (focused) PrimaryYellow.copy(alpha = 0.12f) else SurfaceDark)
+            .background(if (focused) PrimaryYellow.copy(alpha = 0.16f) else SurfaceDark)
+            .border(
+                width = borderWidth.dp,
+                color = if (focused) PrimaryYellow else Color.Transparent,
+                shape = RoundedCornerShape(10.dp)
+            )
             .onFocusChanged { focused = it.isFocused }
             .focusable()
             .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -155,14 +198,19 @@ fun SettingSwitchRow(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(checkedThumbColor = Color.Black, checkedTrackColor = PrimaryYellow)
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.Black, 
+                checkedTrackColor = PrimaryYellow,
+                uncheckedThumbColor = if (focused) Color.Black else TextMuted,
+                uncheckedTrackColor = if (focused) PrimaryYellow.copy(alpha = 0.5f) else SurfaceDark
+            )
         )
     }
 }
 
 /**
  * 底部 DOCK 导航栏：居中悬浮、半透明大圆角胶囊背景，与原版 LomenTV 视觉一致。
- * 每个入口采用「图标在上、文字在下」的竖排布局；遥控器聚焦时整项高亮为黄色。
+ * 每个入口采用「图标在上、文字在下」的竖排布局；遥控器聚焦时整项高亮为黄色，带缩放动画。
  */
 @Composable
 fun BottomNav(items: List<Pair<String, ImageVector>>, selected: Int, onSelect: (Int) -> Unit) {
@@ -183,6 +231,11 @@ fun BottomNav(items: List<Pair<String, ImageVector>>, selected: Int, onSelect: (
             items.forEachIndexed { index, (label, icon) ->
                 val active = index == selected
                 var focused by remember { mutableStateOf(false) }
+                val scale by animateFloatAsState(
+                    targetValue = if (focused) 1.12f else 1f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                )
+                
                 Column(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
@@ -196,7 +249,12 @@ fun BottomNav(items: List<Pair<String, ImageVector>>, selected: Int, onSelect: (
                         .clickable { onSelect(index) }
                         .onFocusChanged { focused = it.isFocused }
                         .focusable()
-                        .padding(horizontal = 22.dp, vertical = 8.dp),
+                        .padding(horizontal = 22.dp, vertical = 8.dp)
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            transformOrigin = androidx.compose.ui.graphics.TransformOrigin.Center
+                        },
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(

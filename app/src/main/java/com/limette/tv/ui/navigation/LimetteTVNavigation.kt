@@ -53,8 +53,8 @@ fun LimetteTVNavigation() {
         composable(Routes.HOME) {
             HomeScreen(
                 viewModel = viewModel,
-                onOpenMediaLibrary = { navController.navigate(Routes.LIBRARY) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onOpenLibrary = { navController.navigate(Routes.LIBRARY) },
                 onOpenSearch = { navController.navigate(Routes.SEARCH) },
                 onOpenFavorites = { navController.navigate(Routes.FAVORITES) },
                 onOpenDetail = { id -> detailId = id; navController.navigate(Routes.DETAIL) },

@@ -62,6 +62,10 @@ class MainViewModel @Inject constructor(
     val favorites = favoriteService.getAllFavorites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    // Toast 消息通道
+    private val _toastMessage = kotlinx.coroutines.channels.Channel<String>(kotlinx.coroutines.channels.Channel.UNLIMITED)
+    val toastMessage: kotlinx.coroutines.channels.ReceiveChannel<String> = _toastMessage
+
     init {
         // 启动后在后台刷新一次索引，首页先直接展示已入库数据
         viewModelScope.launch {
@@ -150,5 +154,10 @@ class MainViewModel @Inject constructor(
             it.title.lowercase().contains(q) || it.fileName.lowercase().contains(q) ||
                 it.filePath.lowercase().contains(q)
         }
+    }
+
+    /** 发送 Toast 消息给 UI */
+    fun showToast(message: String) {
+        viewModelScope.launch { _toastMessage.send(message) }
     }
 }

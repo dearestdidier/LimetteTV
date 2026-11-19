@@ -3,6 +3,8 @@ package com.limette.tv.data.feiniu
 import com.limette.tv.data.remote.RemoteFileClient
 import com.limette.tv.data.webdav.WebDavFile
 import com.limette.tv.domain.model.MediaSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 把飞牛影视账号包装成统一的 RemoteFileClient。
@@ -18,19 +20,21 @@ class FeiNiuFileClient(
         listAllVideoFiles()
 
     override suspend fun listAllVideoFiles(onProgress: ((Int) -> Unit)?): Result<List<WebDavFile>> =
-        feiNiuClient.listVideos(source, onProgress).map { list ->
-            list.map { media ->
-                WebDavFile(
-                    name = media.guid,
-                    path = media.guid,
-                    isDirectory = false,
-                    size = media.fileSize,
-                    displayTitle = media.title,
-                    posterUrl = media.posterUrl,
-                    year = media.year,
-                    seasonNumber = media.seasonNumber,
-                    episodeNumber = media.episodeNumber
-                )
+        withContext(Dispatchers.IO) {
+            feiNiuClient.listVideos(source, onProgress).map { list ->
+                list.map { media ->
+                    WebDavFile(
+                        name = media.guid,
+                        path = media.guid,
+                        isDirectory = false,
+                        size = media.fileSize,
+                        displayTitle = media.title,
+                        posterUrl = media.posterUrl,
+                        year = media.year,
+                        seasonNumber = media.seasonNumber,
+                        episodeNumber = media.episodeNumber
+                    )
+                }
             }
         }
 

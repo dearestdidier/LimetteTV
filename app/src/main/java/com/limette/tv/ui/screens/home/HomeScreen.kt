@@ -29,21 +29,25 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,13 +55,13 @@ import com.limette.tv.R
 import com.limette.tv.data.local.database.entity.WebDavMediaEntity
 import com.limette.tv.data.repository.ScanState
 import com.limette.tv.ui.MainViewModel
-import com.limette.tv.ui.components.BottomNav
 import com.limette.tv.ui.components.FocusableBox
 import com.limette.tv.ui.components.MediaPoster
 import com.limette.tv.ui.components.SectionTitle
 import com.limette.tv.ui.components.TopAction
 import com.limette.tv.ui.theme.BackgroundDark
 import com.limette.tv.ui.theme.PrimaryYellow
+import com.limette.tv.ui.theme.SuccessGreen
 import com.limette.tv.ui.theme.SurfaceDark
 import com.limette.tv.ui.theme.TextMuted
 import com.limette.tv.ui.theme.TextPrimary
@@ -66,8 +70,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
-    onOpenMediaLibrary: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenLibrary: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenFavorites: () -> Unit,
     onOpenDetail: (String) -> Unit,
@@ -77,8 +81,37 @@ fun HomeScreen(
     val recent by viewModel.recentHistory.collectAsState()
     val scan by viewModel.scanState.collectAsState()
     val scope = rememberCoroutineScope()
+    
+    // Toast 消息收集
+    var toastMessage: String? by remember { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        for (msg in viewModel.toastMessage) {
+            toastMessage = msg
+            kotlinx.coroutines.delay(3000)
+            toastMessage = null
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().background(BackgroundDark)) {
+
+        // Toast 消息显示
+        toastMessage?.let { msg ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 28.dp, vertical = 12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                        .background(SurfaceDark)
+                        .padding(horizontal = 18.dp, vertical = 12.dp)
+                ) {
+                    Text(msg, style = MaterialTheme.typography.bodyMedium, color = PrimaryYellow)
+                }
+            }
+        }
 
         // ---- 顶栏：圆形图标 + Limette TV ----
         Row(
@@ -126,6 +159,18 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 28.dp)
             )
+            is ScanState.SourceError -> Text(
+                text = "源「${state.sourceName}」：${state.message}",
+                color = Color(0xFFef4444),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 28.dp)
+            )
+            is ScanState.Done -> Text(
+                text = "扫描完成，共找到 ${state.total} 个视频",
+                color = SuccessGreen,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 28.dp)
+            )
             else -> Unit
         }
 
@@ -145,16 +190,24 @@ fun HomeScreen(
                     Text("媒体库中还没有视频", style = MaterialTheme.typography.titleLarge, color = TextPrimary)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "添加 SMB 或 WebDAV 媒体源后，首页会直接显示全部视频文件",
+                        "添加 SMB / WebDAV / 飞牛影视媒体源后，首页会直接显示全部视频文件",
                         style = MaterialTheme.typography.bodyMedium, color = TextMuted
                     )
                     Spacer(Modifier.height(22.dp))
-                    Button(
-                        onClick = onOpenMediaLibrary,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryYellow, contentColor = Color.Black
-                        )
-                    ) { Text("前往媒体库") }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(
+                            onClick = onOpenLibrary,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PrimaryYellow, contentColor = Color.Black
+                            )
+                        ) { Text("添加媒体源") }
+                        Button(
+                            onClick = { viewModel.refresh() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SurfaceDark, contentColor = TextPrimary
+                            )
+                        ) { Text("重新扫描") }
+                    }
                 }
             } else {
                 LazyVerticalGrid(
@@ -226,21 +279,6 @@ fun HomeScreen(
                 }
             }
         }
-
-        BottomNav(
-            items = listOf(
-                "首页" to Icons.Default.Home,
-                "媒体库" to Icons.Default.VideoLibrary,
-                "设置" to Icons.Default.Settings
-            ),
-            selected = 0,
-            onSelect = { index ->
-                when (index) {
-                    1 -> onOpenMediaLibrary()
-                    2 -> onOpenSettings()
-                }
-            }
-        )
     }
 }
 

@@ -100,7 +100,7 @@ dependencies {
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
-    // 局域网 HTTP：WebDAV / 飞牛影视接口 / Coil 图片加载（仅 OkHttp，不引入 Retrofit）
+    // 局域网 HTTP：WebDAV / 飞牛影视接口 / Coil 图片加载（飞牛 API 见 FeiNiuApi.kt，纯 OkHttp + Gson + Authx 签名）
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Image Loading
