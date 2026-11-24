@@ -1,7 +1,7 @@
 <p align="center">
   <img src="./logo.png" width="128">
   </p>
-# Limette TV
+# Limette TV</h1>
 
 > 面向 Android TV / 飞牛 OS（FnOS）的纯本地 NAS 播放器
 > A purely local NAS video player for Android TV / FnOS
