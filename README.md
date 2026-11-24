@@ -7,6 +7,11 @@
 
 ---
 
+<p align="center">
+  <img src="./logo.png" width="128">
+  <h1 align="center">OpenList</h1>
+</p>
+
 ## 中文
 
 ### 这是什么
